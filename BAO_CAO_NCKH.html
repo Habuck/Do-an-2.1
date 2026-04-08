@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Báo cáo NCKH — Easy Kit Audio Detection</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+:root{--p:#1a365d;--pl:#2b6cb0;--bg:#fff;--bg2:#f7fafc;--t:#1a202c;--t2:#4a5568;--t3:#718096;--bd:#e2e8f0;--cb:#1e293b;--ct:#e2e8f0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Serif',Georgia,serif;color:var(--t);background:var(--bg);line-height:1.8;font-size:14px}
+.pg{max-width:210mm;margin:0 auto;padding:18mm 20mm}
+@media print{body{font-size:11px}.pg{padding:12mm 18mm;max-width:100%}.np{display:none!important}.pb{page-break-before:always}}
+h1{font-size:1.5rem;color:var(--p);text-align:center;margin-bottom:4px}
+h2{font-size:1.15rem;color:var(--p);border-bottom:2px solid var(--p);padding-bottom:4px;margin:24px 0 10px}
+h3{font-size:.95rem;color:var(--pl);margin:16px 0 6px}
+h4{font-size:.88rem;color:var(--t);margin:12px 0 4px;font-weight:600}
+p{margin:5px 0;text-align:justify}
+ul,ol{margin:5px 0 5px 22px}li{margin:2px 0}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.82rem}
+th{background:var(--p);color:#fff;padding:6px 8px;text-align:left;font-family:Inter;font-weight:600;font-size:.78rem}
+td{padding:5px 8px;border-bottom:1px solid var(--bd);font-size:.8rem}
+tr:nth-child(even){background:var(--bg2)}
+caption{font-weight:700;margin-bottom:3px;font-size:.84rem;color:var(--p)}
+code{font-family:'JetBrains Mono',monospace;font-size:.76rem;background:#edf2f7;padding:1px 4px;border-radius:3px}
+pre{background:var(--cb);color:var(--ct);padding:10px 14px;border-radius:6px;overflow-x:auto;margin:8px 0;font-size:.72rem;line-height:1.5}
+pre code{background:none;padding:0;color:inherit}
+.db{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin:12px 0;text-align:center}
+.db svg{max-width:100%;height:auto}
+.dc{font-size:.78rem;color:var(--t2);margin-top:6px;font-style:italic}
+.ib{background:#ebf8ff;border-left:3px solid #3182ce;padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:.82rem}
+.wb{background:#fffbeb;border-left:3px solid #d69e2e;padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:.82rem}
+.tc{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:14px 20px;margin:14px 0}
+.tc h3{color:var(--p);margin-top:0}.tc ol{margin-left:16px}.tc li{margin:2px 0;font-size:.85rem}
+.tc a{color:var(--pl);text-decoration:none}.tc a:hover{text-decoration:underline}
+.pb-btn{position:fixed;bottom:16px;right:16px;z-index:999;background:var(--p);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:.82rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2);font-family:Inter;font-weight:600}
+.fn{font-weight:700;color:var(--p)}
+.cm{color:#94a3b8;font-style:italic}
+.sb{background:#f0fdf4;border:1px solid #86efac;border-radius:5px;padding:8px 12px;margin:6px 0}
+.sn{display:inline-block;background:var(--p);color:#fff;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;font-size:.7rem;font-weight:700;margin-right:5px;font-family:Inter}
+.mt{font-style:italic;background:#f1f5f9;padding:6px 12px;border-radius:5px;display:block;margin:6px 0;text-align:center;font-size:.88rem}
+.rl{font-size:.8rem}.rl li{margin:4px 0}.rl a{color:var(--pl);word-break:break-all}
+</style>
+</head>
+<body>
+<button class="pb-btn np" onclick="window.print()">&#128424; In PDF</button>
+<div class="pg">
+
+<div style="text-align:center;padding:25px 0 16px">
+<p style="font-size:.82rem;color:var(--t3);letter-spacing:3px;text-transform:uppercase">Báo cáo nghiên cứu khoa học</p>
+<h1 style="font-size:1.7rem;margin:10px 0">HỆ THỐNG PHÂN TÍCH ÂM THANH ĐA CHỨC NĂNG<br>ỨNG DỤNG MACHINE LEARNING VÀ DEEP LEARNING</h1>
+<p style="font-size:.98rem;color:var(--pl);font-weight:600">Easy Kit Audio Detection</p>
+<hr style="width:50%;margin:14px auto;border:1.5px solid var(--p)">
+<p style="color:var(--t2);font-size:.82rem">Python 3.11 · PyTorch · wav2vec2 · scikit-learn · librosa · Flask<br>AMD Radeon Pro VII 16GB HBM2 · DirectML · FP16</p>
+</div>
+
+<div class="tc"><h3>Mục lục</h3>
+<ol>
+<li><a href="#c1">Giới thiệu và mục tiêu</a></li>
+<li><a href="#c1b">Kiến thức nền tảng — Tín hiệu âm thanh, ML, DL</a>
+  <ol style="margin:2px 0 2px 16px;font-size:.82rem">
+    <li><a href="#c1b-1">Sóng âm thanh và tín hiệu số</a></li>
+    <li><a href="#c1b-2">Biến đổi Fourier và STFT</a></li>
+    <li><a href="#c1b-3">Thang Mel và MFCC</a></li>
+    <li><a href="#c1b-4">Đặc trưng âm thanh khác (Chroma, ZCR, RMS, Pitch)</a></li>
+    <li><a href="#c1b-5">Machine Learning — RandomForest, KNN</a></li>
+    <li><a href="#c1b-6">Deep Learning — Neural Networks</a></li>
+    <li><a href="#c1b-7">Transformer và Self-Attention</a></li>
+    <li><a href="#c1b-8">Self-Supervised Learning (SSL) và wav2vec 2.0</a></li>
+    <li><a href="#c1b-9">Dynamic Time Warping (DTW)</a></li>
+    <li><a href="#c1b-10">FP16, GPU và DirectML</a></li>
+  </ol>
+</li>
+<li><a href="#c2">Cấu trúc mã nguồn</a></li>
+<li><a href="#c3">core.py — Phân loại âm thanh (RandomForest)</a></li>
+<li><a href="#c4">gender.py — Nhận diện giới tính (KNN)</a></li>
+<li><a href="#c5">emotion.py — Nhận diện cảm xúc (wav2vec2)</a></li>
+<li><a href="#c6">train_emotion.py — Fine-tuning trên GPU (chi tiết 7 bước)</a></li>
+<li><a href="#c7">pronunciation.py — Đánh giá phát âm (DTW)</a></li>
+<li><a href="#c8">cough.py — Phân loại tiếng ho</a></li>
+<li><a href="#c9">depression.py — Sàng lọc trầm cảm</a></li>
+<li><a href="#c10">web_app.py — Flask API + main.html</a></li>
+<li><a href="#c11">Tối ưu GPU DirectML</a></li>
+<li><a href="#c12">Kết quả · Kết luận · Tài liệu tham khảo</a></li>
+</ol>
+</div>
+
+<!-- CH1 -->
+<h2 id="c1">1. Giới thiệu và mục tiêu</h2>
+<p>Nghiên cứu xây dựng <strong>Easy Kit Audio Detection</strong> — hệ thống 6 module phân tích âm thanh trên nền web, kết hợp ML truyền thống (RandomForest, KNN) với DL hiện đại (wav2vec2). Tối ưu cho GPU AMD 16GB VRAM qua DirectML + FP16.</p>
+<table><caption>Bảng 1. Tổng quan 6 modules</caption>
+<tr><th>#</th><th>Module</th><th>File</th><th>Phương pháp</th><th>Output</th></tr>
+<tr><td>1</td><td>Audio Classifier</td><td>core.py</td><td>RandomForest(200)</td><td>speech/noise/music/silence</td></tr>
+<tr><td>2</td><td>Gender</td><td>gender.py</td><td>KNN(K=5)</td><td>male/female</td></tr>
+<tr><td>3</td><td>Emotion</td><td>emotion.py</td><td>wav2vec2+Linear</td><td>7 cảm xúc</td></tr>
+<tr><td>4</td><td>Pronunciation</td><td>pronunciation.py</td><td>Fast DTW</td><td>Score 0-100</td></tr>
+<tr><td>5</td><td>Cough</td><td>cough.py</td><td>RandomForest(150)</td><td>dry/wet/not_cough</td></tr>
+<tr><td>6</td><td>Depression</td><td>depression.py</td><td>Rule-based(7)</td><td>Risk %</td></tr>
+</table>
+
+<!-- ======================================================================= -->
+<!-- CHƯƠNG 2: KIẾN THỨC NỀN TẢNG -->
+<!-- ======================================================================= -->
+<div class="pb"></div>
+<h2 id="c1b">2. Kiến thức nền tảng — Tín hiệu âm thanh, ML, DL</h2>
+
+<!-- 2.1 Sóng âm -->
+<h3 id="c1b-1">2.1. Sóng âm thanh và tín hiệu số</h3>
+
+<h4>2.1.1. Sóng âm thanh (Sound Wave)</h4>
+<p><strong>Âm thanh</strong> là sóng cơ học lan truyền qua môi trường (không khí, nước, rắn) dưới dạng dao động áp suất. Sóng âm được đặc trưng bởi:</p>
+<ul>
+<li><strong>Biên độ (Amplitude)</strong> — cường độ âm thanh (loudness), đơn vị Pascal (Pa) hoặc dB</li>
+<li><strong>Tần số (Frequency)</strong> — số dao động/giây, đơn vị Hertz (Hz). Tai người nghe 20Hz–20kHz</li>
+<li><strong>Pha (Phase)</strong> — vị trí trong chu kỳ dao động</li>
+</ul>
+<p>Một sóng âm đơn giản (pure tone) biểu diễn dạng hàm sin:</p>
+<p class="mt"><em>y(t) = A · sin(2πft + φ)</em> &nbsp; với A = biên độ, f = tần số (Hz), φ = pha</p>
+
+<div class="db">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<text x="350" y="16" text-anchor="middle" font-size="10" font-weight="700" fill="#1a365d">SÓNG ÂM THANH — Miền thời gian (Time Domain)</text>
+<!-- Axes -->
+<line x1="60" y1="90" x2="660" y2="90" stroke="#a0aec0" stroke-width="1"/>
+<line x1="60" y1="30" x2="60" y2="155" stroke="#a0aec0" stroke-width="1"/>
+<text x="55" y="35" text-anchor="end" font-size="7" fill="#718096">+A</text>
+<text x="55" y="95" text-anchor="end" font-size="7" fill="#718096">0</text>
+<text x="55" y="152" text-anchor="end" font-size="7" fill="#718096">-A</text>
+<text x="360" y="170" text-anchor="middle" font-size="8" fill="#718096">Thời gian (t) →</text>
+<text x="30" y="90" text-anchor="middle" font-size="8" fill="#718096" transform="rotate(-90,30,90)">Biên độ</text>
+<!-- Sine wave -->
+<path d="M60,90 Q110,30 160,90 T260,90 T360,90 T460,90 T560,90 T660,90" fill="none" stroke="#3182ce" stroke-width="2"/>
+<!-- Annotations -->
+<line x1="60" y1="35" x2="160" y2="35" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3,2"/>
+<line x1="60" y1="35" x2="60" y2="90" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="110" y="28" text-anchor="middle" font-size="7" fill="#e53e3e" font-weight="600">Biên độ A</text>
+<line x1="60" y1="100" x2="260" y2="100" stroke="#38a169" stroke-width="1.5"/>
+<path d="M60,100 L65,97 L65,103 Z" fill="#38a169"/>
+<path d="M260,100 L255,97 L255,103 Z" fill="#38a169"/>
+<text x="160" y="115" text-anchor="middle" font-size="7" fill="#38a169" font-weight="600">Chu kỳ T = 1/f</text>
+<!-- 440Hz label -->
+<rect x="480" y="40" width="170" height="50" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+<text x="565" y="56" text-anchor="middle" font-size="7.5" font-weight="600" fill="#1a365d">Ví dụ: Nốt La (A4)</text>
+<text x="565" y="69" text-anchor="middle" font-size="7" fill="#2c5282">f = 440 Hz</text>
+<text x="565" y="81" text-anchor="middle" font-size="7" fill="#2c5282">T = 1/440 ≈ 2.27 ms</text>
+</svg>
+<p class="dc"><span class="fn">Hình 3.</span> Biểu diễn sóng âm trong miền thời gian — biên độ A và chu kỳ T.</p>
+</div>
+
+<h4>2.1.2. Số hóa âm thanh (Digital Audio)</h4>
+<p>Để máy tính xử lý, sóng analog phải được <strong>số hóa</strong> qua 2 bước:</p>
+<ul>
+<li><strong>Lấy mẫu (Sampling)</strong>: Đo biên độ tại các thời điểm đều đặn. <strong>Tần số lấy mẫu (Sample Rate, SR)</strong> = số mẫu/giây. Theo <strong>định lý Nyquist</strong>, SR phải ≥ 2× tần số cao nhất cần ghi. Dự án dùng <code>SR = 16,000 Hz</code> (đủ cho giọng nói, vì tiếng nói chủ yếu nằm dưới 8kHz).</li>
+<li><strong>Lượng tử hóa (Quantization)</strong>: Mỗi mẫu được biểu diễn bằng số bit nhất định. CD dùng 16-bit (65,536 mức). Dự án dùng <code>float32</code> (giá trị liên tục trong [-1, 1]).</li>
+</ul>
+<p class="mt"><em>SR = 16,000 Hz → 1 giây = 16,000 samples → 8 giây = 128,000 samples</em></p>
+
+<div class="db">
+<svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<text x="350" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#1a365d">SỐ HÓA ÂM THANH — Analog → Digital</text>
+<!-- Analog -->
+<rect x="20" y="28" width="200" height="110" rx="5" fill="#f0fff4" stroke="#38a169"/>
+<text x="120" y="45" text-anchor="middle" font-size="8" font-weight="600" fill="#22543d">Sóng Analog (liên tục)</text>
+<path d="M35,85 Q60,45 85,85 T135,85 T185,85" fill="none" stroke="#38a169" stroke-width="1.5"/>
+<text x="120" y="128" text-anchor="middle" font-size="7" fill="#276749">Microphone thu sóng áp suất</text>
+<!-- Arrow -->
+<line x1="220" y1="83" x2="260" y2="83" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<text x="240" y="76" text-anchor="middle" font-size="7" fill="#e53e3e" font-weight="600">ADC</text>
+<!-- Sampled -->
+<rect x="260" y="28" width="200" height="110" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+<text x="360" y="45" text-anchor="middle" font-size="8" font-weight="600" fill="#1a365d">Lấy mẫu (Sampling)</text>
+<line x1="280" y1="85" x2="440" y2="85" stroke="#cbd5e0" stroke-width="0.5"/>
+<!-- Sample points -->
+<circle cx="285" cy="85" r="3" fill="#3182ce"/><line x1="285" y1="85" x2="285" y2="85" stroke="#3182ce"/>
+<circle cx="305" cy="65" r="3" fill="#3182ce"/><line x1="305" y1="85" x2="305" y2="65" stroke="#3182ce" stroke-width="1"/>
+<circle cx="325" cy="55" r="3" fill="#3182ce"/><line x1="325" y1="85" x2="325" y2="55" stroke="#3182ce" stroke-width="1"/>
+<circle cx="345" cy="70" r="3" fill="#3182ce"/><line x1="345" y1="85" x2="345" y2="70" stroke="#3182ce" stroke-width="1"/>
+<circle cx="365" cy="85" r="3" fill="#3182ce"/>
+<circle cx="385" cy="100" r="3" fill="#3182ce"/><line x1="385" y1="85" x2="385" y2="100" stroke="#3182ce" stroke-width="1"/>
+<circle cx="405" cy="110" r="3" fill="#3182ce"/><line x1="405" y1="85" x2="405" y2="110" stroke="#3182ce" stroke-width="1"/>
+<circle cx="425" cy="95" r="3" fill="#3182ce"/><line x1="425" y1="85" x2="425" y2="95" stroke="#3182ce" stroke-width="1"/>
+<text x="360" y="128" text-anchor="middle" font-size="7" fill="#2c5282">SR = 16,000 mẫu/giây</text>
+<!-- Arrow -->
+<line x1="460" y1="83" x2="500" y2="83" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<!-- Digital -->
+<rect x="500" y="28" width="185" height="110" rx="5" fill="#fefcbf" stroke="#d69e2e"/>
+<text x="592" y="45" text-anchor="middle" font-size="8" font-weight="600" fill="#744210">Mảng số (numpy)</text>
+<text x="592" y="65" text-anchor="middle" font-size="7" fill="#92400e" font-family="JetBrains Mono">[0.00, 0.34, 0.52,</text>
+<text x="592" y="78" text-anchor="middle" font-size="7" fill="#92400e" font-family="JetBrains Mono"> 0.25, 0.00,-0.28,</text>
+<text x="592" y="91" text-anchor="middle" font-size="7" fill="#92400e" font-family="JetBrains Mono">-0.45,-0.18, ...]</text>
+<text x="592" y="110" text-anchor="middle" font-size="7" fill="#92400e">float32 ∈ [-1, 1]</text>
+<text x="592" y="128" text-anchor="middle" font-size="7" fill="#92400e">shape: (128000,) = 8s</text>
+</svg>
+<p class="dc"><span class="fn">Hình 4.</span> Quá trình số hóa: Sóng analog → Lấy mẫu (16kHz) → Mảng numpy float32.</p>
+</div>
+
+<div class="ib"><strong>Trong dự án:</strong> <code>librosa.load(path, sr=16000, mono=True)</code> đọc file audio bất kỳ, resample về 16kHz, chuyển stereo→mono, trả về <code>numpy.ndarray</code> float32.</div>
+
+<!-- 2.2 Fourier -->
+<h3 id="c1b-2">2.2. Biến đổi Fourier và STFT</h3>
+
+<h4>2.2.1. Biến đổi Fourier (Fourier Transform)</h4>
+<p>Mọi tín hiệu phức tạp đều có thể phân tách thành tổng các sóng sin đơn giản ở các tần số khác nhau — đây là nguyên lý của <strong>Biến đổi Fourier</strong> (Joseph Fourier, 1822). Chuyển tín hiệu từ <strong>miền thời gian</strong> sang <strong>miền tần số</strong>:</p>
+<p class="mt"><em>X(f) = ∫ x(t) · e<sup>-j2πft</sup> dt</em> &nbsp; (Fourier Transform liên tục)</p>
+<p>Dạng rời rạc cho tín hiệu số (DFT — Discrete Fourier Transform):</p>
+<p class="mt"><em>X[k] = Σ<sub>n=0..N-1</sub> x[n] · e<sup>-j2πkn/N</sup></em> &nbsp; với k = 0,1,...,N-1</p>
+<p><strong>FFT (Fast Fourier Transform)</strong> là thuật toán tính DFT nhanh với O(N log N) thay vì O(N²). Thư viện <code>librosa</code> dùng FFT qua numpy.</p>
+
+<h4>2.2.2. STFT — Short-Time Fourier Transform</h4>
+<p>FFT cho biết tần số tổng thể nhưng <strong>không cho biết tần số thay đổi theo thời gian</strong>. STFT giải quyết bằng cách chia tín hiệu thành các <strong>frame ngắn</strong> (window), áp dụng FFT trên từng frame:</p>
+<p class="mt"><em>STFT(t,f) = Σ<sub>n</sub> x[n] · w[n-t] · e<sup>-j2πfn</sup></em></p>
+<p>Tham số quan trọng:</p>
+<ul>
+<li><strong>n_fft = 2048</strong>: Kích thước FFT (2048 samples ≈ 128ms ở 16kHz) — độ phân giải tần số</li>
+<li><strong>hop_length = 512</strong>: Bước nhảy giữa các frame (512 samples ≈ 32ms) — độ phân giải thời gian</li>
+<li><strong>Window function</strong>: Hann window — giảm spectral leakage</li>
+</ul>
+
+<div class="db">
+<svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<text x="350" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#1a365d">STFT — Từ Waveform sang Spectrogram</text>
+<!-- Waveform -->
+<rect x="20" y="30" width="150" height="65" rx="5" fill="#f0fff4" stroke="#38a169"/>
+<text x="95" y="47" text-anchor="middle" font-size="8" font-weight="600" fill="#22543d">Waveform</text>
+<path d="M30,65 Q50,45 70,65 T110,65 T150,65" fill="none" stroke="#38a169" stroke-width="1.5"/>
+<text x="95" y="88" text-anchor="middle" font-size="7" fill="#276749">Miền thời gian</text>
+<!-- Arrow -->
+<line x1="170" y1="62" x2="195" y2="62" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<text x="182" y="55" text-anchor="middle" font-size="6" fill="#e53e3e" font-weight="600">STFT</text>
+<!-- Spectrogram -->
+<rect x="195" y="25" width="180" height="80" rx="5" fill="#1e293b"/>
+<!-- Fake spectrogram pixels -->
+<rect x="200" y="30" width="8" height="8" fill="#1e40af" opacity=".3"/><rect x="210" y="30" width="8" height="8" fill="#1e40af" opacity=".5"/>
+<rect x="220" y="30" width="8" height="8" fill="#3182ce" opacity=".7"/><rect x="230" y="30" width="8" height="8" fill="#3182ce" opacity=".4"/>
+<rect x="240" y="30" width="8" height="8" fill="#63b3ed" opacity=".6"/><rect x="250" y="30" width="8" height="8" fill="#63b3ed" opacity=".3"/>
+<rect x="200" y="40" width="8" height="8" fill="#e53e3e" opacity=".8"/><rect x="210" y="40" width="8" height="8" fill="#ed8936" opacity=".9"/>
+<rect x="220" y="40" width="8" height="8" fill="#ecc94b" opacity=".7"/><rect x="230" y="40" width="8" height="8" fill="#ed8936" opacity=".6"/>
+<rect x="240" y="40" width="8" height="8" fill="#e53e3e" opacity=".5"/><rect x="250" y="40" width="8" height="8" fill="#ecc94b" opacity=".8"/>
+<rect x="200" y="50" width="8" height="8" fill="#ecc94b" opacity=".9"/><rect x="210" y="50" width="8" height="8" fill="#e53e3e" opacity=".7"/>
+<rect x="220" y="50" width="8" height="8" fill="#ed8936" opacity=".6"/><rect x="230" y="50" width="8" height="8" fill="#ecc94b" opacity=".9"/>
+<rect x="200" y="60" width="8" height="8" fill="#3182ce" opacity=".2"/><rect x="210" y="60" width="8" height="8" fill="#3182ce" opacity=".3"/>
+<rect x="220" y="60" width="8" height="8" fill="#1e40af" opacity=".2"/><rect x="230" y="60" width="8" height="8" fill="#1e40af" opacity=".1"/>
+<text x="285" y="50" text-anchor="middle" font-size="7" fill="#e2e8f0" font-weight="600">|STFT|²</text>
+<text x="285" y="68" text-anchor="middle" font-size="6" fill="#a0aec0">Frequency ↑</text>
+<text x="285" y="98" text-anchor="middle" font-size="6" fill="#a0aec0">Time →</text>
+<text x="285" y="88" text-anchor="middle" font-size="7" fill="#e2e8f0">Spectrogram</text>
+<!-- Legend -->
+<rect x="195" y="108" width="180" height="18" rx="3" fill="none" stroke="#4a5568"/>
+<rect x="200" y="112" width="20" height="10" fill="#1e40af"/><text x="225" y="120" font-size="6" fill="#4a5568">Thấp</text>
+<rect x="250" y="112" width="20" height="10" fill="#ed8936"/><text x="275" y="120" font-size="6" fill="#4a5568">TB</text>
+<rect x="300" y="112" width="20" height="10" fill="#e53e3e"/><text x="325" y="120" font-size="6" fill="#4a5568">Cao</text>
+<!-- Parameters -->
+<rect x="400" y="30" width="280" height="95" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+<text x="540" y="48" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">Tham số STFT trong dự án</text>
+<text x="415" y="64" font-size="7" fill="#2c5282"><tspan font-weight="600">n_fft = 2048</tspan> (128ms window)</text>
+<text x="415" y="77" font-size="7" fill="#2c5282"><tspan font-weight="600">hop_length = 512</tspan> (32ms hop)</text>
+<text x="415" y="90" font-size="7" fill="#2c5282"><tspan font-weight="600">Window</tspan>: Hann (cosine taper)</text>
+<text x="415" y="103" font-size="7" fill="#2c5282"><tspan font-weight="600">Output</tspan>: (1025, T) — 1025 freq bins</text>
+<text x="415" y="116" font-size="7" fill="#2c5282"><tspan font-weight="600">T</tspan> = ⌊(128000-2048)/512⌋+1 = 246 frames</text>
+</svg>
+<p class="dc"><span class="fn">Hình 5.</span> STFT chuyển waveform sang spectrogram — trục X: thời gian, trục Y: tần số, màu: năng lượng.</p>
+</div>
+
+<!-- 2.3 Mel & MFCC -->
+<h3 id="c1b-3">2.3. Thang Mel và MFCC</h3>
+
+<h4>2.3.1. Thang Mel (Mel Scale)</h4>
+<p>Tai người <strong>không nghe tần số tuyến tính</strong> — sự khác biệt giữa 100Hz và 200Hz (nghe rõ) lớn hơn giữa 8000Hz và 8100Hz (gần như giống nhau). <strong>Thang Mel</strong> (Stevens, 1937) mô hình hóa cảm nhận tần số của tai người:</p>
+<p class="mt"><em>m = 2595 · log<sub>10</sub>(1 + f/700)</em> &nbsp; (Hz → Mel)</p>
+<p class="mt"><em>f = 700 · (10<sup>m/2595</sup> - 1)</em> &nbsp; (Mel → Hz)</p>
+<p>Ví dụ: 1000 Hz ≈ 1000 Mel, nhưng 8000 Hz ≈ 2840 Mel (không gấp 8 lần).</p>
+
+<h4>2.3.2. Mel-spectrogram</h4>
+<p>Áp dụng <strong>Mel filterbank</strong> (n_mels bộ lọc tam giác trên thang Mel) lên spectrogram, rồi chuyển sang thang dB:</p>
+<p class="mt"><em>Mel-spec = 10 · log<sub>10</sub>(W<sub>mel</sub> · |STFT(y)|²)</em> &nbsp; với W<sub>mel</sub> ∈ ℝ<sup>128×1025</sup></p>
+
+<h4>2.3.3. MFCC — Mel-Frequency Cepstral Coefficients</h4>
+<p><strong>MFCC</strong> là đặc trưng âm thanh phổ biến nhất trong speech processing. Bước tính:</p>
+<ol>
+<li>Tính Mel-spectrogram (log power spectrum trên thang Mel)</li>
+<li>Áp dụng <strong>DCT (Discrete Cosine Transform)</strong> để decorrelate → giữ lại n_mfcc hệ số đầu tiên</li>
+</ol>
+<p class="mt"><em>MFCC = DCT(log(W<sub>mel</sub> · |STFT(y)|²))</em> &nbsp; giữ 40 hệ số đầu (n_mfcc=40)</p>
+<p>MFCC hệ số thấp (0-12) mô tả <strong>hình dạng tổng thể</strong> của phổ (formants — cộng hưởng thanh quản). Hệ số cao mô tả chi tiết fine-grained. Thường chỉ cần 13-40 hệ số đầu.</p>
+
+<div class="db">
+<svg viewBox="0 0 700 80" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#805ad5"/></marker></defs>
+<rect x="5" y="12" width="100" height="45" rx="4" fill="#f0fff4" stroke="#38a169" filter="url(#sh)"/><text x="55" y="32" text-anchor="middle" font-size="7.5" font-weight="700" fill="#22543d">Waveform</text><text x="55" y="44" text-anchor="middle" font-size="6" fill="#276749">y[n], 16kHz</text>
+<line x1="105" y1="34" x2="120" y2="34" stroke="#805ad5" stroke-width="1" marker-end="url(#a3)"/>
+<rect x="120" y="12" width="80" height="45" rx="4" fill="#fefcbf" stroke="#d69e2e" filter="url(#sh)"/><text x="160" y="32" text-anchor="middle" font-size="7" font-weight="700" fill="#744210">STFT</text><text x="160" y="44" text-anchor="middle" font-size="6" fill="#92400e">|X[k,t]|²</text>
+<line x1="200" y1="34" x2="215" y2="34" stroke="#805ad5" stroke-width="1" marker-end="url(#a3)"/>
+<rect x="215" y="8" width="100" height="52" rx="4" fill="#bee3f8" stroke="#3182ce" filter="url(#sh)"/><text x="265" y="26" text-anchor="middle" font-size="7" font-weight="700" fill="#1a365d">Mel Filterbank</text><text x="265" y="38" text-anchor="middle" font-size="6" fill="#2c5282">128 bộ lọc tam giác</text><text x="265" y="50" text-anchor="middle" font-size="6" fill="#2c5282">thang Mel</text>
+<line x1="315" y1="34" x2="330" y2="34" stroke="#805ad5" stroke-width="1" marker-end="url(#a3)"/>
+<rect x="330" y="12" width="80" height="45" rx="4" fill="#fce7f3" stroke="#ec4899" filter="url(#sh)"/><text x="370" y="28" text-anchor="middle" font-size="7" font-weight="700" fill="#831843">Log</text><text x="370" y="40" text-anchor="middle" font-size="6" fill="#9d174d">10·log₁₀(...)</text><text x="370" y="50" text-anchor="middle" font-size="6" fill="#9d174d">→ Mel-spec</text>
+<line x1="410" y1="34" x2="425" y2="34" stroke="#805ad5" stroke-width="1" marker-end="url(#a3)"/>
+<rect x="425" y="12" width="80" height="45" rx="4" fill="#e9d8fd" stroke="#805ad5" filter="url(#sh)"/><text x="465" y="28" text-anchor="middle" font-size="7" font-weight="700" fill="#44337a">DCT</text><text x="465" y="40" text-anchor="middle" font-size="6" fill="#553c9a">Decorrelate</text><text x="465" y="50" text-anchor="middle" font-size="6" fill="#553c9a">giữ 40 hệ số</text>
+<line x1="505" y1="34" x2="520" y2="34" stroke="#805ad5" stroke-width="1" marker-end="url(#a3)"/>
+<rect x="520" y="12" width="110" height="45" rx="4" fill="#fed7d7" stroke="#e53e3e" filter="url(#sh)"/><text x="575" y="28" text-anchor="middle" font-size="7.5" font-weight="700" fill="#742a2a">MFCC</text><text x="575" y="42" text-anchor="middle" font-size="6" fill="#9b2c2c">(40, T) matrix</text><text x="575" y="52" text-anchor="middle" font-size="6" fill="#9b2c2c">→ mean → 1 scalar</text>
+</svg>
+<p class="dc"><span class="fn">Hình 6.</span> Pipeline tính MFCC: Waveform → STFT → Mel filterbank → Log → DCT → 40 coefficients.</p>
+</div>
+
+<!-- 2.4 Other features -->
+<h3 id="c1b-4">2.4. Đặc trưng âm thanh khác</h3>
+<table><caption>Bảng 2. Tổng hợp đặc trưng âm thanh sử dụng trong dự án</caption>
+<tr><th>Feature</th><th>Công thức</th><th>Ý nghĩa</th><th>Dùng cho module</th></tr>
+<tr><td><strong>Chroma</strong></td><td>STFT → 12 pitch classes (C,C#,...B)</td><td>Phân bố năng lượng theo nốt nhạc</td><td>core.py</td></tr>
+<tr><td><strong>ZCR</strong></td><td>(1/2N)Σ|sgn(y[n])-sgn(y[n-1])|</td><td>Tần suất tín hiệu đổi dấu — noise cao, speech thấp</td><td>core.py, cough.py</td></tr>
+<tr><td><strong>RMS Energy</strong></td><td>√(Σy²/N) per frame</td><td>Cường độ âm thanh — silence ≈ 0</td><td>core.py, cough.py, depression.py</td></tr>
+<tr><td><strong>Pitch (F0)</strong></td><td>pYIN algorithm (probabilistic)</td><td>Tần số cơ bản giọng nói — nam ~120Hz, nữ ~210Hz</td><td>core.py, pronunciation.py, depression.py</td></tr>
+<tr><td><strong>Spectral Centroid</strong></td><td>Σ(f·|X(f)|) / Σ|X(f)|</td><td>"Trọng tâm" tần số — âm sáng vs. tối</td><td>cough.py, gender.py</td></tr>
+<tr><td><strong>Spectral Rolloff</strong></td><td>f sao cho Σ|X(f')|² = 0.85·total</td><td>Tần số chứa 85% năng lượng</td><td>cough.py</td></tr>
+<tr><td><strong>Spectral Flatness</strong></td><td>GM(|X(f)|) / AM(|X(f)|)</td><td>Phổ phẳng (noise) vs. có peaks (tonal)</td><td>cough.py</td></tr>
+<tr><td><strong>Jitter</strong></td><td>Biến thiên chu kỳ F0 liên tiếp</td><td>Giọng run, không đều — chỉ báo bệnh lý</td><td>depression.py</td></tr>
+<tr><td><strong>Shimmer</strong></td><td>Biến thiên biên độ giữa chu kỳ</td><td>Giọng không ổn định — chỉ báo trầm cảm</td><td>depression.py</td></tr>
+<tr><td><strong>HNR</strong></td><td>10·log₁₀(E_harmonic/E_noise)</td><td>Tỷ lệ harmonic/noise — giọng breathy thấp</td><td>depression.py</td></tr>
+</table>
+
+<!-- 2.5 ML -->
+<h3 id="c1b-5">2.5. Machine Learning — RandomForest và KNN</h3>
+
+<h4>2.5.1. Random Forest (Breiman, 2001)</h4>
+<p><strong>Random Forest</strong> [8] là phương pháp <strong>ensemble learning</strong>, kết hợp nhiều cây quyết định (decision trees) huấn luyện trên các tập con ngẫu nhiên (bagging):</p>
+<ol>
+<li>Từ dataset N mẫu, tạo B bootstrap samples (lấy mẫu có hoàn lại)</li>
+<li>Với mỗi sample, train 1 decision tree, tại mỗi node chọn ngẫu nhiên √p features</li>
+<li>Kết quả cuối = <strong>majority voting</strong> (classification) hoặc <strong>average</strong> (regression)</li>
+</ol>
+<p class="mt"><em>ŷ = mode(h<sub>1</sub>(x), h<sub>2</sub>(x), ..., h<sub>B</sub>(x))</em> &nbsp; với B = 200 trees trong dự án</p>
+<p><strong>Ưu điểm:</strong> Ít overfitting nhờ ensemble, không cần normalize features, train nhanh, interpretable.</p>
+
+<h4>2.5.2. K-Nearest Neighbors (KNN)</h4>
+<p>KNN phân loại mẫu mới dựa trên K mẫu gần nhất trong không gian đặc trưng. Không có giai đoạn "training" thực sự — chỉ lưu toàn bộ dữ liệu.</p>
+<p class="mt"><em>ŷ = mode(y<sub>i</sub> : x<sub>i</sub> ∈ K-nearest(x))</em> &nbsp; với distance = √(Σ(x<sub>j</sub>-x<sub>ij</sub>)²)</p>
+<p>Dự án dùng <strong>K=5, Euclidean distance, 6 features</strong>. Đơn giản nhưng hiệu quả khi feature space có phân tách rõ ràng (male vs. female).</p>
+
+<!-- 2.6 DL -->
+<h3 id="c1b-6">2.6. Deep Learning — Neural Networks</h3>
+
+<h4>2.6.1. Perceptron và MLP</h4>
+<p>Một <strong>neuron nhân tạo</strong> nhận đầu vào x, nhân với trọng số w, cộng bias b, qua hàm kích hoạt:</p>
+<p class="mt"><em>y = σ(w<sup>T</sup>x + b)</em> &nbsp; với σ = ReLU, Sigmoid, Tanh, ...</p>
+<p><strong>Multi-Layer Perceptron (MLP)</strong> xếp chồng nhiều lớp neuron. Classifier head trong dự án là MLP 2 lớp:</p>
+<pre><code>classifier = nn.Sequential(
+    nn.Linear(1024, 1024),    # Lớp ẩn: 1024 → 1024 (1,049,600 params)
+    nn.ReLU(),                 # Hàm kích hoạt: max(0, x)
+    nn.Dropout(0.1),           # Regularization: tắt 10% neuron ngẫu nhiên
+    nn.Linear(1024, 7),        # Lớp output: 1024 → 7 classes
+)   # Tổng: ~1M trainable parameters</code></pre>
+
+<h4>2.6.2. CNN — Convolutional Neural Network</h4>
+<p><strong>CNN</strong> sử dụng <strong>convolution filters</strong> trượt qua dữ liệu, phát hiện pattern cục bộ. Trong wav2vec2, CNN 1D trượt qua raw waveform để trích xuất local features:</p>
+<p class="mt"><em>(Conv1D * y)[t] = Σ<sub>k</sub> w[k] · y[t+k]</em> &nbsp; (tích chập 1 chiều)</p>
+<p>wav2vec2 dùng 7 lớp Conv1D với stride giảm dần (5,2,2,2,2,2,2), tổng downsample 320×. Nghĩa là cứ 320 samples (20ms ở 16kHz) tạo ra 1 frame representation.</p>
+
+<h4>2.6.3. Backpropagation và Gradient Descent</h4>
+<p>Training neural network = tìm weights w sao cho <strong>loss function</strong> nhỏ nhất. <strong>Backpropagation</strong> tính gradient ∂L/∂w bằng chain rule, rồi cập nhật:</p>
+<p class="mt"><em>w<sub>t+1</sub> = w<sub>t</sub> - η · ∂L/∂w<sub>t</sub></em> &nbsp; (Gradient Descent, η = learning rate)</p>
+<p><strong>Adam optimizer</strong> (dự án dùng) cải tiến SGD bằng adaptive learning rate cho từng parameter, dùng momentum bậc 1 (β₁=0.9) và bậc 2 (β₂=0.999).</p>
+
+<!-- 2.7 Transformer -->
+<h3 id="c1b-7">2.7. Transformer và Self-Attention</h3>
+
+<h4>2.7.1. Self-Attention Mechanism</h4>
+<p><strong>Transformer</strong> (Vaswani et al., 2017) đã cách mạng hóa NLP và speech. Cơ chế cốt lõi là <strong>Self-Attention</strong>: mỗi vị trí trong chuỗi "nhìn" tất cả các vị trí khác để tính representation:</p>
+<p class="mt"><em>Attention(Q,K,V) = softmax(QK<sup>T</sup>/√d<sub>k</sub>) · V</em></p>
+<p>Với Q (Query), K (Key), V (Value) là các phép chiếu tuyến tính từ input. √d<sub>k</sub> là scaling factor. <strong>Multi-Head Attention</strong> chạy song song H heads rồi concatenate:</p>
+<p class="mt"><em>MultiHead(Q,K,V) = Concat(head<sub>1</sub>,...,head<sub>H</sub>) · W<sup>O</sup></em></p>
+
+<h4>2.7.2. Transformer Encoder Block</h4>
+<p>Mỗi block gồm: <strong>Multi-Head Self-Attention → Add & Norm → Feed-Forward Network → Add & Norm</strong>. wav2vec2 dùng 12 blocks, mỗi block có 16 attention heads, hidden size 1024.</p>
+
+<div class="db">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<text x="350" y="16" text-anchor="middle" font-size="10" font-weight="700" fill="#1a365d">TRANSFORMER ENCODER BLOCK (×12 trong wav2vec2)</text>
+<!-- Input -->
+<rect x="250" y="140" width="200" height="28" rx="4" fill="#f0fff4" stroke="#38a169"/><text x="350" y="158" text-anchor="middle" font-size="8" font-weight="600" fill="#22543d">Input: (T, 1024)</text>
+<line x1="350" y1="140" x2="350" y2="125" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<!-- Multi-Head Attention -->
+<rect x="230" y="95" width="240" height="30" rx="5" fill="#dbeafe" stroke="#3182ce" filter="url(#sh)"/>
+<text x="350" y="114" text-anchor="middle" font-size="8" font-weight="700" fill="#1e40af">Multi-Head Self-Attention (16 heads)</text>
+<!-- Add & Norm -->
+<line x1="350" y1="95" x2="350" y2="83" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<rect x="280" y="72" width="140" height="14" rx="3" fill="#fefcbf" stroke="#d69e2e"/><text x="350" y="82" text-anchor="middle" font-size="6.5" font-weight="600" fill="#744210">Add & LayerNorm</text>
+<!-- FFN -->
+<line x1="350" y1="72" x2="350" y2="60" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<rect x="230" y="32" width="240" height="28" rx="5" fill="#fce7f3" stroke="#ec4899" filter="url(#sh)"/>
+<text x="350" y="50" text-anchor="middle" font-size="8" font-weight="700" fill="#831843">Feed-Forward: Linear(1024→4096)→GELU→Linear(4096→1024)</text>
+<!-- Add & Norm 2 -->
+<line x1="350" y1="32" x2="350" y2="25" stroke="#718096" stroke-width="1"/>
+<!-- Residual connections -->
+<line x1="480" y1="155" x2="500" y2="155" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3,2"/>
+<line x1="500" y1="155" x2="500" y2="79" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3,2"/>
+<line x1="500" y1="79" x2="420" y2="79" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+<text x="510" y="120" font-size="6" fill="#e53e3e" font-weight="600">Residual</text>
+<!-- Params -->
+<rect x="20" y="30" width="180" height="80" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+<text x="110" y="48" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">wav2vec2 specs</text>
+<text x="30" y="62" font-size="6.5" fill="#2c5282">Layers: 12</text>
+<text x="30" y="74" font-size="6.5" fill="#2c5282">Hidden: 1024</text>
+<text x="30" y="86" font-size="6.5" fill="#2c5282">Heads: 16 (d_k=64)</text>
+<text x="30" y="98" font-size="6.5" fill="#2c5282">FFN inner: 4096</text>
+<text x="30" y="110" font-size="6.5" fill="#2c5282">Total: ~315M params</text>
+</svg>
+<p class="dc"><span class="fn">Hình 7.</span> Transformer Encoder Block — Multi-Head Self-Attention + FFN + Residual connections.</p>
+</div>
+
+<!-- 2.8 SSL -->
+<h3 id="c1b-8">2.8. Self-Supervised Learning và wav2vec 2.0</h3>
+
+<h4>2.8.1. Self-Supervised Learning (SSL)</h4>
+<p><strong>SSL</strong> là paradigm training mới: model học từ <strong>dữ liệu không nhãn</strong> bằng cách tự tạo "nhãn" từ dữ liệu. Ví dụ: BERT mask một số từ, dự đoán lại. wav2vec2 mask một số frames, dự đoán lại từ context. SSL rất hiệu quả vì dữ liệu không nhãn gần như vô hạn.</p>
+
+<h4>2.8.2. wav2vec 2.0 (Baevski et al., 2020)</h4>
+<p>Pretrained trên <strong>960 giờ audio LibriSpeech</strong> (tiếng Anh, không nhãn). 3 thành phần:</p>
+<ol>
+<li><strong>Feature Encoder</strong> (CNN): Raw waveform → latent representations z<sub>t</sub></li>
+<li><strong>Quantization</strong>: z<sub>t</sub> → discrete tokens q<sub>t</sub> qua Gumbel-Softmax (codebook learning)</li>
+<li><strong>Context Network</strong> (Transformer): Mask một số z<sub>t</sub>, dùng context dự đoán q<sub>t</sub> tương ứng</li>
+</ol>
+<p>Loss function = <strong>Contrastive loss</strong>: phân biệt q<sub>t</sub> đúng với K distractors + diversity loss.</p>
+<p class="mt"><em>L = -log(exp(sim(c<sub>t</sub>,q<sub>t</sub>)) / Σ<sub>q̃</sub> exp(sim(c<sub>t</sub>,q̃)))</em> &nbsp; (InfoNCE loss)</p>
+<p>Sau pretrain, wav2vec2 học được <strong>contextualized speech representations</strong> chất lượng cao — mỗi frame 20ms được biểu diễn bằng vector 1024 chiều chứa thông tin ngữ nghĩa phong phú.</p>
+
+<div class="ib"><strong>Transfer Learning:</strong> Dự án dùng pretrained wav2vec2 làm <strong>frozen feature extractor</strong> (không train lại) → chỉ train classifier head nhẹ (~1M params) trên dữ liệu cảm xúc. Giống cách dùng ResNet pretrained cho image classification.</div>
+
+<!-- 2.9 DTW -->
+<h3 id="c1b-9">2.9. Dynamic Time Warping (DTW)</h3>
+<p><strong>DTW</strong> (Sakoe & Chiba, 1978) [5] so sánh hai chuỗi thời gian có <strong>tốc độ khác nhau</strong>. Ví dụ: 2 người nói cùng 1 câu nhưng nhanh/chậm khác nhau. DTW tìm alignment tối ưu bằng quy hoạch động:</p>
+<p class="mt"><em>D[i,j] = cost(s₁[i], s₂[j]) + min(D[i-1,j], D[i,j-1], D[i-1,j-1])</em></p>
+<p>Độ phức tạp O(n·m). Dự án dùng <strong>Fast DTW</strong> với Sakoe-Chiba band (radius=10-20) giảm xuống O(n·radius).</p>
+
+<div class="db">
+<svg viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<text x="250" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#1a365d">DTW — Warping Path (minh họa)</text>
+<!-- Grid -->
+<rect x="80" y="25" width="120" height="120" fill="#f7fafc" stroke="#e2e8f0"/>
+<text x="140" y="157" text-anchor="middle" font-size="7" fill="#718096">Sequence 1 (reference) →</text>
+<text x="45" y="85" text-anchor="middle" font-size="7" fill="#718096" transform="rotate(-90,45,85)">Sequence 2 (user) →</text>
+<!-- Grid lines -->
+<line x1="80" y1="55" x2="200" y2="55" stroke="#e2e8f0" stroke-width="0.5"/>
+<line x1="80" y1="85" x2="200" y2="85" stroke="#e2e8f0" stroke-width="0.5"/>
+<line x1="80" y1="115" x2="200" y2="115" stroke="#e2e8f0" stroke-width="0.5"/>
+<line x1="110" y1="25" x2="110" y2="145" stroke="#e2e8f0" stroke-width="0.5"/>
+<line x1="140" y1="25" x2="140" y2="145" stroke="#e2e8f0" stroke-width="0.5"/>
+<line x1="170" y1="25" x2="170" y2="145" stroke="#e2e8f0" stroke-width="0.5"/>
+<!-- Warping path -->
+<path d="M83,142 L95,130 L112,118 L125,100 L140,85 L158,72 L175,52 L190,38 L197,28" fill="none" stroke="#e53e3e" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="83" cy="142" r="3" fill="#e53e3e"/>
+<circle cx="140" cy="85" r="3" fill="#e53e3e"/>
+<circle cx="197" cy="28" r="3" fill="#e53e3e"/>
+<!-- Diagonal reference -->
+<line x1="80" y1="145" x2="200" y2="25" stroke="#a0aec0" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="210" y="90" font-size="6" fill="#a0aec0">Diagonal =</text>
+<text x="210" y="99" font-size="6" fill="#a0aec0">same speed</text>
+<!-- Explanation -->
+<rect x="270" y="25" width="220" height="120" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+<text x="380" y="43" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">Giải thích</text>
+<text x="280" y="58" font-size="7" fill="#2c5282">Warping path cho phép co/giãn</text>
+<text x="280" y="70" font-size="7" fill="#2c5282">thời gian để match hai chuỗi.</text>
+<text x="280" y="86" font-size="7" fill="#2c5282">Path gần đường chéo = tốc độ</text>
+<text x="280" y="98" font-size="7" fill="#2c5282">gần giống nhau.</text>
+<text x="280" y="114" font-size="7" fill="#2c5282">Path lệch nhiều = phát âm quá</text>
+<text x="280" y="126" font-size="7" fill="#2c5282">nhanh hoặc quá chậm.</text>
+<text x="280" y="140" font-size="7" fill="#e53e3e" font-weight="600">DTW distance → Score (0-100)</text>
+</svg>
+<p class="dc"><span class="fn">Hình 8.</span> DTW warping path — alignment tối ưu giữa 2 chuỗi có tốc độ khác nhau.</p>
+</div>
+
+<!-- 2.10 FP16 GPU -->
+<h3 id="c1b-10">2.10. FP16, GPU và DirectML</h3>
+
+<h4>2.10.1. Float16 (FP16) — Half Precision</h4>
+<p>Số thực trong máy tính lưu theo chuẩn IEEE 754. <strong>FP32</strong> (float32) dùng 32 bit (1 sign + 8 exponent + 23 mantissa). <strong>FP16</strong> (float16) dùng 16 bit (1+5+10) — tiết kiệm 50% bộ nhớ và tăng tốc tính toán:</p>
+<table>
+<tr><th>Precision</th><th>Bits</th><th>Range</th><th>VRAM cho wav2vec2</th><th>Throughput</th></tr>
+<tr><td>FP32</td><td>32</td><td>±3.4×10³⁸</td><td>~720 MB</td><td>Baseline</td></tr>
+<tr><td>FP16</td><td>16</td><td>±65,504</td><td>~360 MB</td><td>~2× faster</td></tr>
+</table>
+
+<h4>2.10.2. GPU — Graphics Processing Unit</h4>
+<p>GPU có hàng nghìn cores nhỏ, xử lý <strong>song song</strong> hàng triệu phép tính cùng lúc. Deep Learning tận dụng GPU vì matrix multiplication (phép toán cốt lõi) rất song song. <strong>VRAM</strong> (Video RAM) chứa model weights + input data + activations.</p>
+
+<h4>2.10.3. DirectML — AMD GPU backend</h4>
+<p><strong>CUDA</strong> (NVIDIA) là backend GPU phổ biến nhất nhưng chỉ chạy trên NVIDIA. <strong>DirectML</strong> [7] (Microsoft) là API hardware-accelerated ML chạy trên <strong>mọi GPU Windows</strong> (AMD, Intel, NVIDIA). Tích hợp qua <code>torch-directml</code> [10].</p>
+<p>Khác biệt quan trọng với CUDA:</p>
+<ul>
+<li>Không hỗ trợ <code>torch.cuda.amp.autocast</code> → phải cast FP16 thủ công bằng <code>.half()</code></li>
+<li>Không có <code>cuda.empty_cache()</code> → dùng <code>gc.collect()</code> + <code>del tensor</code></li>
+<li>Khi hết VRAM: CUDA raise <code>OutOfMemoryError</code>, DirectML <strong>hang</strong> (treo) → phải dùng batch size cố định</li>
+</ul>
+
+<div class="db">
+<svg viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<text x="350" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#1a365d">VRAM Budget — Radeon Pro VII 16GB</text>
+<rect x="50" y="25" width="600" height="35" rx="5" fill="#e2e8f0" stroke="#a0aec0"/>
+<rect x="50" y="25" width="22" height="35" fill="#e53e3e" rx="0"/><text x="61" y="70" text-anchor="middle" font-size="5.5" fill="#742a2a">Model FP16</text><text x="61" y="78" text-anchor="middle" font-size="5" fill="#9b2c2c">0.36GB</text>
+<rect x="72" y="25" width="188" height="35" fill="#3182ce"/><text x="166" y="46" text-anchor="middle" font-size="8" fill="#fff" font-weight="600">Batch 32×8s (FP16) ~5GB</text>
+<rect x="260" y="25" width="225" height="35" fill="#805ad5"/><text x="372" y="46" text-anchor="middle" font-size="8" fill="#fff" font-weight="600">Activations ~6GB</text>
+<rect x="485" y="25" width="56" height="35" fill="#38a169"/><text x="513" y="46" text-anchor="middle" font-size="7" fill="#fff" font-weight="600">Feat</text>
+<rect x="541" y="25" width="109" height="35" fill="#718096" opacity=".4"/><text x="596" y="46" text-anchor="middle" font-size="7" fill="#fff" font-weight="600">Headroom 1.5G</text>
+</svg>
+<p class="dc"><span class="fn">Hình 9.</span> Phân bổ VRAM 16GB: model 0.36GB + batch 5GB + activations 6GB + features + headroom.</p>
+</div>
+
+<div class="ib"><strong>Tổng kết:</strong> Chương này cung cấp nền tảng lý thuyết cho toàn bộ dự án — từ cách âm thanh được số hóa, qua các phương pháp trích xuất đặc trưng (STFT, Mel, MFCC), đến các thuật toán ML/DL (RandomForest, KNN, CNN, Transformer, SSL) và kỹ thuật tối ưu phần cứng (FP16, DirectML).</div>
+
+<!-- CH2 -->
+<h2 id="c2">3. Cấu trúc mã nguồn</h2>
+<pre><code>Do an 2/
+├── audio_project/          # Package — 6 modules
+│   ├── core.py             # 150 dòng — Audio Classifier
+│   ├── gender.py           # 57 dòng  — Gender KNN
+│   ├── emotion.py          # 120 dòng — Emotion wav2vec2
+│   ├── pronunciation.py    # 166 dòng — Pronunciation DTW
+│   ├── cough.py            # 127 dòng — Cough Classifier
+│   └── depression.py       # 193 dòng — Depression Screen
+├── data/raw/&lt;label&gt;/       # Audio gốc theo class
+├── models/                 # .joblib, .pt
+├── train_emotion.py        # 528 dòng — GPU fine-tuning
+├── web_app.py              # 231 dòng — Flask REST API
+├── main.html               # 879 dòng — Frontend SPA
+└── main.py                 # 42 dòng  — CLI</code></pre>
+
+<div class="db">
+<svg viewBox="0 0 780 360" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs>
+<linearGradient id="gH" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1a365d"/><stop offset="100%" stop-color="#2b6cb0"/></linearGradient>
+<linearGradient id="gM" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ebf8ff"/><stop offset="100%" stop-color="#bee3f8"/></linearGradient>
+<linearGradient id="gG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fed7d7"/><stop offset="100%" stop-color="#feb2b2"/></linearGradient>
+<filter id="sh"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity=".12"/></filter>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#718096"/></marker>
+</defs>
+<rect x="250" y="3" width="280" height="28" rx="5" fill="url(#gH)"/>
+<text x="390" y="22" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">KIẾN TRÚC HỆ THỐNG</text>
+<rect x="300" y="42" width="180" height="30" rx="5" fill="#fefcbf" stroke="#d69e2e" filter="url(#sh)"/>
+<text x="390" y="62" text-anchor="middle" font-size="9" font-weight="600" fill="#744210">main.html — Frontend SPA</text>
+<line x1="390" y1="72" x2="390" y2="90" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<rect x="260" y="90" width="260" height="30" rx="5" fill="#c6f6d5" stroke="#38a169" filter="url(#sh)"/>
+<text x="390" y="110" text-anchor="middle" font-size="9" font-weight="600" fill="#22543d">web_app.py — Flask 11 endpoints</text>
+<line x1="390" y1="120" x2="390" y2="140" stroke="#718096" stroke-width="1" marker-end="url(#ar)"/>
+<rect x="20" y="140" width="740" height="145" rx="7" fill="none" stroke="#3182ce" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="42" y="155" font-size="8" font-weight="700" fill="#2b6cb0">audio_project/</text>
+<rect x="35" y="162" width="225" height="48" rx="5" fill="url(#gM)" stroke="#3182ce" filter="url(#sh)"/>
+<text x="147" y="178" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">core.py — RandomForest(200)</text>
+<text x="147" y="192" text-anchor="middle" font-size="6.5" fill="#2c5282">extract_features() → train_model() → predict_file()</text>
+<text x="147" y="204" text-anchor="middle" font-size="6.5" fill="#4a5568">MFCC + Mel + Chroma + ZCR + RMS + F0</text>
+<rect x="278" y="162" width="225" height="48" rx="5" fill="url(#gM)" stroke="#3182ce" filter="url(#sh)"/>
+<text x="390" y="178" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">gender.py — KNN(K=5)</text>
+<text x="390" y="192" text-anchor="middle" font-size="6.5" fill="#2c5282">train_gender_model() → predict_gender()</text>
+<text x="390" y="204" text-anchor="middle" font-size="6.5" fill="#4a5568">meanfreq, sd, centroid, meanfun, IQR, median</text>
+<rect x="520" y="162" width="225" height="48" rx="5" fill="url(#gG)" stroke="#e53e3e" filter="url(#sh)"/>
+<text x="632" y="178" text-anchor="middle" font-size="8" font-weight="700" fill="#742a2a">emotion.py — wav2vec2 GPU</text>
+<text x="632" y="192" text-anchor="middle" font-size="6.5" fill="#9b2c2c">_load_model() → predict_emotion_from_file()</text>
+<text x="632" y="204" text-anchor="middle" font-size="6.5" fill="#4a5568">Transformer 12L×1024H → 7 emotions</text>
+<rect x="35" y="222" width="225" height="48" rx="5" fill="url(#gM)" stroke="#3182ce" filter="url(#sh)"/>
+<text x="147" y="238" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">pronunciation.py — DTW</text>
+<text x="147" y="252" text-anchor="middle" font-size="6.5" fill="#2c5282">evaluate_pronunciation() → _fast_dtw()</text>
+<text x="147" y="264" text-anchor="middle" font-size="6.5" fill="#4a5568">MFCC 30% + Pitch 40% + Rhythm 15% + Energy 15%</text>
+<rect x="278" y="222" width="225" height="48" rx="5" fill="url(#gM)" stroke="#3182ce" filter="url(#sh)"/>
+<text x="390" y="238" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">cough.py — RandomForest(150)</text>
+<text x="390" y="252" text-anchor="middle" font-size="6.5" fill="#2c5282">_extract_cough_features() → predict_cough()</text>
+<text x="390" y="264" text-anchor="middle" font-size="6.5" fill="#4a5568">MFCC + spectral + attack_ratio + duration</text>
+<rect x="520" y="222" width="225" height="48" rx="5" fill="url(#gM)" stroke="#3182ce" filter="url(#sh)"/>
+<text x="632" y="238" text-anchor="middle" font-size="8" font-weight="700" fill="#1a365d">depression.py — Rule-based</text>
+<text x="632" y="252" text-anchor="middle" font-size="6.5" fill="#2c5282">extract_depression_features() → screen()</text>
+<text x="632" y="264" text-anchor="middle" font-size="6.5" fill="#4a5568">7 indicators: Pitch, Jitter, Shimmer, HNR, Pause</text>
+<rect x="35" y="300" width="350" height="35" rx="5" fill="#e9d8fd" stroke="#805ad5" filter="url(#sh)"/>
+<text x="210" y="322" text-anchor="middle" font-size="8" font-weight="600" fill="#44337a">data/ · models/ · voice.csv · features.csv</text>
+<rect x="410" y="300" width="350" height="35" rx="5" fill="#fed7d7" stroke="#e53e3e" filter="url(#sh)"/>
+<text x="585" y="316" text-anchor="middle" font-size="8" font-weight="600" fill="#742a2a">GPU Radeon Pro VII 16GB — train_emotion.py</text>
+<text x="585" y="328" text-anchor="middle" font-size="7" fill="#9b2c2c">DirectML · FP16 · batch=32 · 528 dòng</text>
+</svg>
+<p class="dc"><span class="fn">Hình 1.</span> Kiến trúc tổng thể: Frontend → Flask → 6 Modules → Data/GPU.</p>
+</div>
+
+<!-- CH3 -->
+<h2 id="c3">3. core.py — Phân loại âm thanh (150 dòng)</h2>
+<h3>3.1. Hàm extract_features(y, cfg)</h3>
+<pre><code><span class="cm"># core.py:57-69 — Trích 6 đặc trưng trung bình từ 1 audio</span>
+def extract_features(y, c=Cfg()):
+    mfcc   = librosa.feature.mfcc(y=y, sr=c.sr, n_mfcc=c.n_mfcc)   # (40, T)
+    mel    = librosa.power_to_db(librosa.feature.melspectrogram(
+                 y=y, sr=c.sr, n_mels=c.n_mels), ref=np.max)        # (128, T)
+    chroma = librosa.feature.chroma_stft(y=y, sr=c.sr)              # (12, T)
+    zcr    = librosa.feature.zero_crossing_rate(y)                   # (1, T)
+    rms    = librosa.feature.rms(y=y)                                # (1, T)
+    f0,_,_ = librosa.pyin(y, fmin=C2, fmax=C7, sr=c.sr)            # (T,)
+    return {"mfcc_mean": mfcc.mean(), "mel_mean": mel.mean(),
+            "chroma_mean": chroma.mean(), "zcr_mean": zcr.mean(),
+            "rms_mean": rms.mean(), "f0_mean": np.nanmean(f0)}</code></pre>
+<table><caption>Bảng 2. Công thức toán</caption>
+<tr><th>Feature</th><th>Công thức</th><th>Ý nghĩa</th></tr>
+<tr><td>MFCC</td><td><em>DCT(log(W<sub>mel</sub>·|STFT|²))</em></td><td>Mô hình hóa phổ theo thang Mel (thính giác người)</td></tr>
+<tr><td>Mel-spec</td><td><em>10·log₁₀(W<sub>mel</sub>·|STFT|²/ref)</em></td><td>Phổ năng lượng thang Mel (dB)</td></tr>
+<tr><td>ZCR</td><td><em>(1/2N)Σ|sgn(y[n])-sgn(y[n-1])|</em></td><td>Noise: ZCR cao; Speech: ZCR thấp</td></tr>
+<tr><td>RMS</td><td><em>√(Σy²/N)</em></td><td>Năng lượng trung bình; Silence ≈ 0</td></tr>
+<tr><td>F0</td><td><em>pYIN (Probabilistic YIN)</em></td><td>Tần số cơ bản; Speech rõ, Noise thì không</td></tr>
+</table>
+
+<h3>3.2. Hàm train_model(df)</h3>
+<pre><code><span class="cm"># core.py:106-117</span>
+def train_model(df, path=None):
+    x, y = split_xy(df)                                    # features, labels
+    xt, xe, yt, ye = train_test_split(x, y, test_size=0.2,
+                         random_state=42, stratify=y)       # 80/20 stratified
+    m = RandomForestClassifier(n_estimators=200, random_state=42)
+    m.fit(xt, yt)                                           # Ensemble 200 trees
+    report = classification_report(ye, m.predict(xe))
+    joblib.dump(m, path)                                    # → .joblib
+    return TrainResult(model_path=path, report=report, ...)</code></pre>
+
+<h3>3.3. Pipeline run_training_pipeline()</h3>
+<pre><code><span class="cm"># core.py:144-149 — Chạy toàn bộ pipeline 1 lệnh</span>
+def run_training_pipeline():
+    ft = build_feature_table()   # Duyệt data/processed/ → extract → DataFrame
+    save_feature_table(ft)       # → features.csv
+    return train_model(ft)       # Train RF → evaluate → save .joblib</code></pre>
+
+<!-- CH4 -->
+<h2 id="c4">4. gender.py — Nhận diện giới tính (57 dòng)</h2>
+<pre><code><span class="cm"># gender.py:10-11 — 6 features đã chọn</span>
+GENDER_FEATURE_COLUMNS = ["meanfreq","sd","centroid","meanfun","IQR","median"]
+
+<span class="cm"># gender.py:30-46 — Train</span>
+def train_gender_model(csv_path=None):
+    df = pd.read_csv(csv_path or find_voice_csv())   # voice.csv: 3,168 mẫu
+    x, y = df[GENDER_FEATURE_COLUMNS], df["label"]
+    xt,xe,yt,ye = train_test_split(x,y, test_size=0.25, stratify=y)
+    model = KNeighborsClassifier(n_neighbors=5)       # K=5, Euclidean
+    model.fit(xt, yt)                                  # ~97-98% accuracy
+    joblib.dump(model, MODELS_DIR/"gender_classifier.joblib")
+
+<span class="cm"># gender.py:53-56 — Predict</span>
+def predict_gender(features: dict, model=None):
+    frame = pd.DataFrame([[features[c] for c in GENDER_FEATURE_COLUMNS]])
+    return str(model.predict(frame)[0])               # → "male" hoặc "female"</code></pre>
+<p class="mt"><em>d(x,x<sub>i</sub>) = √(Σ<sub>j=1..6</sub>(x<sub>j</sub>-x<sub>ij</sub>)²) → ŷ = mode(y<sub>k</sub>) trong K=5 láng giềng</em></p>
+
+<!-- CH5 -->
+<h2 id="c5">5. emotion.py — Nhận diện cảm xúc wav2vec2 (120 dòng)</h2>
+<h3>5.1. _load_model() — Load pretrained từ HuggingFace</h3>
+<pre><code><span class="cm"># emotion.py:37-92 — Load model + weights</span>
+MODEL_NAME = "r-f/wav2vec-english-speech-emotion-recognition"
+def _load_model():
+    config = AutoConfig.from_pretrained(MODEL_NAME)
+    _extractor = Wav2Vec2FeatureExtractor.from_pretrained(MODEL_NAME)
+    # Tải safetensors (revision refs/pr/6)
+    sf_path = hf_hub_download(MODEL_NAME, "model.safetensors", revision="refs/pr/6")
+    state = load_file(sf_path)
+    # Tách wav2vec2 base vs classifier head
+    for k, v in state.items():
+        if k.startswith("wav2vec2."): base[k.replace("wav2vec2.","")] = v
+        if k.startswith("classifier.dense."): cls[...] = v     # Linear(1024→1024)
+        if k.startswith("classifier.out_proj."): cls[...] = v  # Linear(1024→7)
+    _model.load_state_dict({**base, **cls})
+    _model.to(_get_device()).eval()   # → DirectML GPU, inference mode</code></pre>
+
+<h3>5.2. predict_emotion_from_array() — Inference</h3>
+<pre><code><span class="cm"># emotion.py:95-119</span>
+def predict_emotion_from_array(y, sr=16000):
+    model, extractor, device, id2label = _load_model()
+    inputs = extractor(y, sampling_rate=sr, return_tensors="pt", padding=True)
+    input_values = inputs.input_values.to(device)              # → GPU
+    with torch.no_grad():
+        logits = model(input_values)                            # Forward pass
+        probs = F.softmax(logits, dim=-1)[0].cpu().numpy()     # 7 xác suất
+    return {"emotion": top_label, "confidence": top_score,
+            "all_scores": sorted_dict, "labels_vi": VN_LABELS}</code></pre>
+
+<div class="db">
+<svg viewBox="0 0 760 80" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3182ce"/></marker></defs>
+<rect x="2" y="15" width="80" height="45" rx="4" fill="#f0fff4" stroke="#38a169" filter="url(#sh)"/><text x="42" y="35" text-anchor="middle" font-size="7.5" font-weight="700" fill="#22543d">Waveform</text><text x="42" y="47" text-anchor="middle" font-size="6" fill="#276749">(1,128000)</text>
+<line x1="82" y1="37" x2="98" y2="37" stroke="#3182ce" stroke-width="1" marker-end="url(#a2)"/>
+<rect x="98" y="8" width="100" height="55" rx="4" fill="#fefcbf" stroke="#d69e2e" filter="url(#sh)"/><text x="148" y="26" text-anchor="middle" font-size="7" font-weight="700" fill="#744210">CNN Encoder</text><text x="148" y="38" text-anchor="middle" font-size="6" fill="#92400e">7×Conv1D(512)</text><text x="148" y="49" text-anchor="middle" font-size="6" fill="#92400e">GroupNorm+GELU</text><text x="148" y="58" text-anchor="middle" font-size="5.5" fill="#b45309">→(1,399,512)</text>
+<line x1="198" y1="37" x2="214" y2="37" stroke="#3182ce" stroke-width="1" marker-end="url(#a2)"/>
+<rect x="214" y="8" width="115" height="55" rx="4" fill="#dbeafe" stroke="#3182ce" filter="url(#sh)"/><text x="271" y="26" text-anchor="middle" font-size="7" font-weight="700" fill="#1e40af">Transformer</text><text x="271" y="38" text-anchor="middle" font-size="6" fill="#1e3a8a">12L×1024H×16A</text><text x="271" y="49" text-anchor="middle" font-size="6" fill="#1e3a8a">LayerNorm+FFN</text><text x="271" y="58" text-anchor="middle" font-size="5.5" fill="#1e40af">→(1,399,1024)</text>
+<line x1="329" y1="37" x2="345" y2="37" stroke="#3182ce" stroke-width="1" marker-end="url(#a2)"/>
+<rect x="345" y="15" width="68" height="42" rx="4" fill="#e2e8f0" stroke="#718096" filter="url(#sh)"/><text x="379" y="34" text-anchor="middle" font-size="7" font-weight="700" fill="#2d3748">MeanPool</text><text x="379" y="46" text-anchor="middle" font-size="5.5" fill="#718096">→(1,1024)</text>
+<line x1="413" y1="37" x2="429" y2="37" stroke="#3182ce" stroke-width="1" marker-end="url(#a2)"/>
+<rect x="429" y="8" width="100" height="55" rx="4" fill="#fce7f3" stroke="#ec4899" filter="url(#sh)"/><text x="479" y="26" text-anchor="middle" font-size="7" font-weight="700" fill="#831843">Classifier</text><text x="479" y="38" text-anchor="middle" font-size="6" fill="#9d174d">Linear→ReLU</text><text x="479" y="49" text-anchor="middle" font-size="6" fill="#9d174d">Linear(1024→7)</text><text x="479" y="58" text-anchor="middle" font-size="5.5" fill="#831843">→(1,7) logits</text>
+<line x1="529" y1="37" x2="545" y2="37" stroke="#3182ce" stroke-width="1" marker-end="url(#a2)"/>
+<rect x="545" y="10" width="210" height="50" rx="4" fill="#f0fff4" stroke="#38a169" filter="url(#sh)"/><text x="650" y="28" text-anchor="middle" font-size="7" font-weight="700" fill="#22543d">Softmax → 7 emotions</text><text x="650" y="42" text-anchor="middle" font-size="6" fill="#276749">angry · disgust · fear · happy</text><text x="650" y="52" text-anchor="middle" font-size="6" fill="#276749">neutral · sad · surprise</text>
+</svg>
+<p class="dc"><span class="fn">Hình 2.</span> Forward pass: Waveform→CNN→Transformer→Pool→Classifier→7 emotions.</p>
+</div>
+
+<!-- CH6 -->
+<div class="pb"></div>
+<h2 id="c6">6. train_emotion.py — Fine-tuning trên GPU (528 dòng, 7 bước)</h2>
+
+<h3>6.0. Cấu hình (dòng 32-57)</h3>
+<pre><code>SR = 16000; MAX_LEN = SR*8           # 128K samples = 8 giây
+EXTRACT_BATCH_SIZE = 32               # Batch an toàn cho DirectML
+USE_FP16 = True                       # Half-precision (manual .half())
+TRAIN_BATCH_SIZE = 32; GRAD_ACCUM = 2 # Effective batch = 64
+LR = 1e-4; MAX_STEPS = 7500          # Adam, 7500 training steps
+WARMUP = 500; EVAL_STEPS = 500       # Linear warmup, eval mỗi 500 steps
+LABELS = ["angry","disgust","fear","happy","neutral","sad","surprise"]</code></pre>
+
+<div class="sb"><p><span class="sn">1</span><strong>get_device()</strong> — Phát hiện GPU (dòng 61-73)</p>
+<pre><code>def get_device():
+    try:
+        import torch_directml
+        return torch_directml.device(), "directml"   # AMD GPU
+    except ImportError: pass
+    if torch.cuda.is_available():
+        return torch.device("cuda"), "cuda"           # NVIDIA
+    return torch.device("cpu"), "cpu"                  # Fallback</code></pre>
+</div>
+
+<div class="sb"><p><span class="sn">2</span><strong>load_wav2vec2(device, use_fp16)</strong> — Load FP16 (dòng 122-158)</p>
+<pre><code>def load_wav2vec2(device, use_fp16=True):
+    w2v = Wav2Vec2Model(config)
+    # Tải safetensors, tách wav2vec2 base vs classifier head
+    sf_path = hf_hub_download(MODEL_NAME, "model.safetensors", revision="refs/pr/6")
+    state = load_file(sf_path)
+    w2v_state = {k.replace("wav2vec2.",""):v for k,v in state.items()
+                 if k.startswith("wav2vec2.")}
+    w2v.load_state_dict(w2v_state, strict=False)
+    w2v.eval()
+    if use_fp16: w2v = w2v.half()     # FP32→FP16: 720MB→360MB VRAM
+    w2v = w2v.to(device)               # Transfer → GPU
+    for p in w2v.parameters():
+        p.requires_grad = False         # Frozen backbone
+    # Remap classifier keys: "classifier.dense."→"0.", "out_proj."→"3."
+    cls_state = {remap(k):v for k,v in state.items() if "classifier" in k}
+    return w2v, extractor, config.hidden_size, cls_state</code></pre>
+</div>
+
+<div class="sb"><p><span class="sn">3</span><strong>pseudo_label_batch()</strong> — Gán nhãn tự động (dòng 243-281)</p>
+<pre><code>def pseudo_label_batch(w2v, extractor, classifier, audio_paths, device):
+    all_audio = [fix_length(librosa.load(p,sr=SR)[0]) for p in audio_paths]
+    for batch in chunks(all_audio, batch_size=32):
+        inputs = extractor(batch, sampling_rate=SR, return_tensors="pt",
+                          padding=True, max_length=MAX_LEN, truncation=True)
+        input_vals = inputs.input_values.to(device).half()  # → GPU FP16
+        with torch.no_grad():
+            feat = w2v(input_vals).last_hidden_state.mean(dim=1).float()
+            preds = torch.argmax(classifier(feat.cpu()), dim=-1)
+        labels.extend(preds.tolist())
+    return labels  # [4,3,6,...] → neutral,happy,surprise,...</code></pre>
+<p><em>Pseudo-labeling</em>: Dùng pretrained weights gán nhãn cho raw audio chưa có ground truth.</p>
+</div>
+
+<div class="sb"><p><span class="sn">4</span><strong>augment(y)</strong> — Data augmentation (dòng 91-104)</p>
+<pre><code>def augment(y):
+    r = random.random()
+    if r &lt; 0.3:   y += np.random.randn(len(y))*uniform(0.002,0.015)  # Noise
+    elif r &lt; 0.6: y *= uniform(0.3, 2.0)                              # Volume
+    elif r &lt; 0.8: y = np.roll(y, randint(-SR*0.3, SR*0.3))           # Shift
+    else:          y += noise; y *= uniform(0.5, 1.5)                  # Combo
+    return y.astype(np.float32)
+# Mỗi file × 200 augments → 106 files × 201 = 21,306 samples</code></pre>
+</div>
+
+<div class="sb"><p><span class="sn">5</span><strong>extract_features_gpu()</strong> — Trích features (dòng 175-240)</p>
+<pre><code>def extract_features_gpu(w2v, extractor, audio_list, device, backend,
+                         batch_size=32, quiet=False):
+    for batch_audio in chunks(audio_list, batch_size):
+        inputs = extractor(batch_audio, sampling_rate=SR, return_tensors="pt",
+                          padding=True, max_length=MAX_LEN, truncation=True)
+        input_vals = inputs.input_values.to(device)
+        if USE_FP16: input_vals = input_vals.half()  # Manual FP16 (DirectML)
+        with torch.no_grad():
+            out = w2v(input_vals).last_hidden_state   # (B, T, 1024)
+            # Attention-mask pooling: chỉ average trên frames thực, bỏ padding
+            if inputs.attention_mask is not None:
+                mask = inputs.attention_mask.to(device).unsqueeze(-1)
+                if mask.size(1) != out.size(1):  # Align: wav2vec2 downsample T
+                    mask = F.interpolate(mask.T(1,2), out.size(1), "nearest").T(1,2)
+                pooled = (out*mask).sum(1) / mask.sum(1).clamp(min=1e-6)
+            else: pooled = out.mean(dim=1)
+            features.append(pooled.float().cpu())     # FP16→FP32, → CPU RAM
+        del input_vals, out; gc.collect()              # Free VRAM ngay
+    return torch.cat(features, dim=0)                  # (N, 1024)</code></pre>
+<p class="mt"><em>pooled<sub>i</sub> = Σ<sub>t</sub>(h<sub>t</sub>·m<sub>t</sub>) / Σ<sub>t</sub>(m<sub>t</sub>)</em> — Attention-mask-aware mean pooling</p>
+</div>
+
+<div class="sb"><p><span class="sn">6</span><strong>Chunk-based augment+extract</strong> (dòng 316-360)</p>
+<pre><code>MAX_AUGMENT = 200  # Cap tại 200 (tránh extraction quá lâu)
+for file_idx, (path, label) in enumerate(zip(audio_paths, pseudo_labels)):
+    y = librosa.load(path, sr=SR)[0]
+    chunk_audio = [fix_length(y)]                    # Original
+    for _ in range(augment_factor):
+        chunk_audio.append(fix_length(augment(y.copy())))  # +200 augmented
+    chunk_feats = extract_features_gpu(w2v, extractor, chunk_audio,
+                                       device, backend, quiet=True)
+    all_features_list.append(chunk_feats)  # Chỉ giữ features (3KB/mẫu)
+    del chunk_audio, y                      # Xóa raw audio (512KB/mẫu)
+# RAM: Peak ~100MB (1 file) thay vì 10.6GB (tất cả)</code></pre>
+</div>
+
+<div class="sb"><p><span class="sn">7</span><strong>Training loop</strong> (dòng 367-504)</p>
+<pre><code># Z-score normalization (tránh NaN)
+feat_mean = all_features.mean(dim=0, keepdim=True)
+feat_std  = all_features.std(dim=0, keepdim=True).clamp(min=1e-6)
+all_features = (all_features - feat_mean) / feat_std
+
+del w2v, extractor; gc.collect()  # Giải phóng wav2vec2 → 16GB cho classifier
+train_features = train_features.to(device)  # Features lên GPU
+classifier = classifier.to(device)          # Classifier lên GPU
+optimizer = Adam(classifier.parameters(), lr=LR, betas=(0.9,0.999))
+
+while step &lt; MAX_STEPS:                     # 7,500 steps
+    for feat_batch, label_batch in train_loader:
+        if step &lt; WARMUP:                    # Linear warmup 500 steps
+            lr = LR * (step+1) / WARMUP
+        logits = classifier(feat_batch)
+        loss = CrossEntropy(logits, label_batch) / GRAD_ACCUM
+        loss.backward()
+        if (step+1) % GRAD_ACCUM == 0:      # Mỗi 2 steps: update weights
+            clip_grad_norm_(params, 1.0)
+            optimizer.step(); optimizer.zero_grad()
+        if step % EVAL_STEPS == 0: eval_and_save_best()
+        if step % SAVE_STEPS == 0: save_checkpoint()
+# Final save: classifier_final.pt + feat_mean + feat_std</code></pre>
+<p class="mt"><em>x̂<sub>i</sub> = (x<sub>i</sub> - μ<sub>i</sub>) / max(σ<sub>i</sub>, 10⁻⁶)</em> — Z-score normalization</p>
+</div>
+
+<!-- CH7 -->
+<h2 id="c7">7. pronunciation.py — Đánh giá phát âm DTW (166 dòng)</h2>
+<h3>7.1. _fast_dtw() — Dynamic Time Warping</h3>
+<pre><code><span class="cm"># pronunciation.py — Fast DTW với Sakoe-Chiba band</span>
+def _fast_dtw(seq1, seq2, radius=10):
+    n, m = len(seq1), len(seq2)
+    D = np.full((n+1,m+1), np.inf); D[0,0] = 0.0
+    scale = m / n
+    for i in range(1, n+1):
+        jc = int(round(i * scale))              # Projected center
+        for j in range(max(1,jc-radius), min(m,jc+radius)+1):
+            cost = np.linalg.norm(seq1[i-1] - seq2[j-1])
+            D[i,j] = cost + min(D[i-1,j], D[i,j-1], D[i-1,j-1])
+    return D[n,m] / (n+m)    # Normalized distance</code></pre>
+<p class="mt"><em>D[i,j] = cost(s₁[i],s₂[j]) + min(D[i-1,j], D[i,j-1], D[i-1,j-1])</em></p>
+
+<h3>7.2. evaluate_pronunciation() — 4 chiều, weighted</h3>
+<pre><code><span class="cm"># pronunciation.py:131-165</span>
+def evaluate_pronunciation(user_path, ref_id):
+    y_ref, y_user = load_and_trim(ref_wav), load_and_trim(user_path)
+    mfcc_sc   = dist_to_score(dtw(_mfcc(y_ref), _mfcc(y_user), r=20), 12)  # 30%
+    pitch_sc  = _pitch_score(_pitch(y_ref), _pitch(y_user))                  # 40%
+    rhythm_sc = _rhythm_score(y_ref, y_user)                                 # 15%
+    energy_sc = dist_to_score(dtw(_energy(y_ref), _energy(y_user), r=15), 8) # 15%
+    overall   = mfcc_sc*0.30 + pitch_sc*0.40 + rhythm_sc*0.15 + energy_sc*0.15
+    # ≥85: Xuất sắc | ≥70: Tốt | ≥55: Khá | ≥40: TB | &lt;40: Cần cố gắng</code></pre>
+<p><strong>Pitch = 40%</strong> vì tiếng Việt có 6 thanh điệu — F0 contour quan trọng nhất.</p>
+
+<!-- CH8 -->
+<h2 id="c8">8. cough.py — Phân loại tiếng ho (127 dòng)</h2>
+<pre><code><span class="cm"># cough.py:21-64 — Đặc trưng riêng cho tiếng ho</span>
+def _extract_cough_features(y, sr=16000):
+    yt, _ = librosa.effects.trim(y, top_db=20)
+    # 13 MFCC (mean+std), Spectral (centroid, bandwidth, rolloff, flatness)
+    rms = librosa.feature.rms(y=yt)[0]
+    q = len(rms) // 4
+    feats["energy_attack"]  = mean(rms[:q])       # 1/4 đầu: burst mạnh
+    feats["energy_sustain"] = mean(rms[q:])        # 3/4 sau: decay
+    feats["attack_ratio"]   = attack / sustain     # Ho: cao, Nói: thấp
+    feats["duration"]       = len(yt) / sr         # Ho ngắn, nói dài
+    return feats  # ~35 features → RandomForest(150), 3 classes</code></pre>
+
+<!-- CH9 -->
+<h2 id="c9">9. depression.py — Sàng lọc trầm cảm (193 dòng)</h2>
+<pre><code><span class="cm"># depression.py:65-93 — 11 features giọng nói</span>
+def extract_depression_features(audio_path):
+    return {"pitch_mean": mean(f0), "pitch_std": std(f0),
+            "pitch_range": ptp(f0), "energy_mean": mean(rms),
+            "energy_std": std(rms), "jitter": _jitter(f0),
+            "shimmer": _shimmer(yt), "hnr": _hnr(yt),
+            "speech_rate": onset/s, "pause_ratio": silence%,
+            "duration_sec": len(yt)/SR}
+
+<span class="cm"># depression.py:96-192 — 7 indicators (rule-based)</span>
+def screen_depression(audio_path):
+    feats = extract_depression_features(audio_path)
+    score = 0.0
+    if feats["pitch_std"] &lt; 15:      score += 0.20  # Đơn điệu
+    if feats["energy_mean"] &lt; 0.02:  score += 0.15  # Yếu
+    if feats["speech_rate"] &lt; 2.0:   score += 0.15  # Chậm
+    if feats["pause_ratio"] > 0.5:   score += 0.15  # Nhiều lặng
+    if feats["jitter"] > 0.03:       score += 0.10  # Run
+    if feats["shimmer"] > 0.15:      score += 0.10  # Bất ổn
+    if feats["hnr"] &lt; 5:             score += 0.10  # Thở/khàn
+    # ≥60%: Nguy cơ CAO | ≥30%: Trung bình | &lt;30%: Thấp</code></pre>
+<div class="wb">⚠️ Dựa trên Cummins et al. (2015) [2], chỉ sàng lọc sơ bộ, KHÔNG thay thế chẩn đoán y khoa.</div>
+
+<!-- CH10 -->
+<h2 id="c10">10. web_app.py — Flask API (231 dòng) + main.html</h2>
+<pre><code><span class="cm"># web_app.py — 11 REST endpoints</span>
+@app.route("/api/health")              # GET  — Trạng thái server
+@app.route("/api/train", methods=["POST"])           # Train audio classifier
+@app.route("/api/predict", methods=["POST"])         # Phân loại audio
+@app.route("/api/gender/train", methods=["POST"])    # Train gender KNN
+@app.route("/api/gender/predict", methods=["POST"])  # Nhận diện giới tính
+@app.route("/api/emotion/predict", methods=["POST"]) # Nhận diện cảm xúc (GPU)
+@app.route("/api/pronunciation/sentences")           # Danh sách câu mẫu
+@app.route("/api/pronunciation/audio/&lt;id&gt;")          # Audio mẫu
+@app.route("/api/pronunciation/evaluate", methods=["POST"]) # Chấm phát âm
+@app.route("/api/cough/predict", methods=["POST"])   # Phân loại tiếng ho
+@app.route("/api/depression/screen", methods=["POST"]) # Sàng lọc trầm cảm
+
+<span class="cm"># Auto-train on startup</span>
+def _auto_train():
+    if not (MODELS_DIR/"audio_classifier.joblib").exists():
+        run_training_pipeline()    # Train audio classifier tự động
+    if not (MODELS_DIR/"gender_classifier.joblib").exists():
+        train_gender_model()       # Train gender KNN tự động</code></pre>
+
+<!-- CH11 -->
+<h2 id="c11">11. Tối ưu GPU DirectML</h2>
+<table><caption>Bảng 3. Trước/Sau tối ưu</caption>
+<tr><th>Thông số</th><th>Trước</th><th>Sau</th><th>Cải thiện</th></tr>
+<tr><td>Model VRAM</td><td>FP32 (720MB)</td><td>FP16 (360MB)</td><td>-50%</td></tr>
+<tr><td>Extract batch</td><td>1</td><td>32</td><td>32× throughput</td></tr>
+<tr><td>MAX_LEN</td><td>4s</td><td>8s</td><td>2× context</td></tr>
+<tr><td>Classifier</td><td>CPU</td><td>GPU</td><td>~10× faster</td></tr>
+<tr><td>Training</td><td>~2h</td><td>34 phút</td><td>3.5×</td></tr>
+<tr><td>RAM peak</td><td>10.6GB (all-in-RAM)</td><td>~100MB (chunk)</td><td>-99%</td></tr>
+</table>
+<div class="ib"><strong>DirectML vs CUDA:</strong> Không dùng <code>autocast</code> → dùng <code>.half()</code>. Không dùng <code>cuda.empty_cache</code> → <code>gc.collect()</code>. DirectML hang khi OOM (không raise) → batch cố định.</div>
+
+<!-- CH12 -->
+<h2 id="c12">12. Kết quả · Kết luận · Tài liệu</h2>
+<h3>12.1. Kết quả Emotion training</h3>
+<table>
+<tr><th>Metric</th><th>Giá trị</th></tr>
+<tr><td>Thời gian</td><td>34 phút 4 giây</td></tr>
+<tr><td>Steps</td><td>7,500 / 7,500</td></tr>
+<tr><td>Accuracy</td><td>100%</td></tr>
+<tr><td>Best eval loss</td><td>0.0000</td></tr>
+<tr><td>Features</td><td>21,306 vectors (1024-dim)</td></tr>
+<tr><td>VRAM peak</td><td>~14 / 16 GB</td></tr>
+</table>
+
+<h3>12.2. Kết luận</h3>
+<ul>
+<li>Xây dựng thành công 6 modules phân tích âm thanh tích hợp trong 1 hệ thống web</li>
+<li>wav2vec2 (SSL) cho emotion recognition — fine-tune classifier head trên GPU AMD</li>
+<li>DTW đa chiều cho phát âm tiếng Việt — Pitch 40% (thanh điệu)</li>
+<li>Rule-based depression screening dựa trên 7 biomarkers giọng nói</li>
+<li>Tối ưu VRAM 16GB: FP16 + chunk processing + DirectML → 3.5× faster</li>
+</ul>
+
+<h3>12.3. Tài liệu tham khảo</h3>
+<ol class="rl">
+<li>[1] Baevski et al. (2020). <em>wav2vec 2.0: Self-Supervised Learning of Speech Representations.</em> NeurIPS. <a href="https://arxiv.org/abs/2006.11477">arxiv.org/abs/2006.11477</a></li>
+<li>[2] Cummins et al. (2015). <em>A review of depression and suicide risk assessment using speech analysis.</em> Speech Comm. <a href="https://doi.org/10.1016/j.specom.2015.03.004">doi:10.1016/j.specom.2015.03.004</a></li>
+<li>[3] Low et al. (2011). <em>Detection of clinical depression in adolescents' speech.</em> IEEE TBME. <a href="https://doi.org/10.1109/TBME.2010.2091640">doi:10.1109/TBME.2010.2091640</a></li>
+<li>[4] McFee et al. (2015). <em>librosa: Audio and Music Signal Analysis in Python.</em> <a href="https://librosa.org">librosa.org</a></li>
+<li>[5] Sakoe &amp; Chiba (1978). <em>Dynamic programming algorithm for spoken word recognition.</em> IEEE ASSP. <a href="https://doi.org/10.1109/TASSP.1978.1163055">doi:10.1109/TASSP.1978.1163055</a></li>
+<li>[6] HuggingFace. <em>r-f/wav2vec-english-speech-emotion-recognition.</em> <a href="https://huggingface.co/r-f/wav2vec-english-speech-emotion-recognition">huggingface.co</a></li>
+<li>[7] Microsoft. <em>DirectML — Hardware-accelerated ML.</em> <a href="https://learn.microsoft.com/en-us/windows/ai/directml/dml">learn.microsoft.com/directml</a></li>
+<li>[8] Breiman (2001). <em>Random Forests.</em> ML 45, 5-32. <a href="https://doi.org/10.1023/A:1010933404324">doi:10.1023/A:1010933404324</a></li>
+<li>[9] VietAI. <em>760 Hours Vietnamese Speech Data.</em> <a href="https://github.com/vietai/ASR">github.com/vietai/ASR</a></li>
+<li>[10] PyTorch. <em>torch-directml.</em> <a href="https://github.com/microsoft/DirectML">github.com/microsoft/DirectML</a></li>
+</ol>
+
+</div>
+</body>
+</html>

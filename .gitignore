@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv*/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Models (large binary files)
+models/*.joblib
+models/emotion_finetuned/*.pt
+
+# Data
+data/processed/
+data/features/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.bak
