@@ -1,5 +1,43 @@
 """Flask Backend — Easy Kit Audio Detection."""
+import sys, subprocess, os, shutil
+from pathlib import Path
+try:
+    import builtins, joblib, pandas, librosa
+except ImportError:
+    print("=> Tự động cài đặt thư viện...", flush=True)
+    req_file = Path(__file__).resolve().parent / "requirements.txt"
+    try: subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(req_file)])
+    except: pass
 
+# --- AUTO CLEANUP LEGACY FILES ---
+BASE_DIR = Path(__file__).resolve().parent
+_rm_files = ["BAO_CAO_NCKH-integrated.html", "BAO_CAO_NCKH.html", "index-backend-connected.html",
+             "index-venv311.html", "main.html", "test-simple.html", "skilo tree.md", 
+             "short term dapper mosquito-html.rar", "simple_backend.py", "main.py", "train_emotion.py"]
+_rm_dirs = ["short term dapper mosquito-html", "venv311", "760-Hours-Vietnamese-Speech-Data-by-Mobile-Phone-main"]
+for f in _rm_files:
+    try: os.remove(BASE_DIR / f)
+    except: pass
+for d in _rm_dirs:
+    try: shutil.rmtree(BASE_DIR / d)
+    except: pass
+if (BASE_DIR / "new.html").exists() and not (BASE_DIR / "index.html").exists():
+    try: (BASE_DIR / "new.html").rename(BASE_DIR / "index.html")
+    except: pass
+
+# AUTO PUSH TO GITHUB ONCE
+_git_flag = BASE_DIR / ".git_pushed_flag"
+if not _git_flag.exists():
+    print("=> Đang đồng bộ và đẩy mã nguồn lên GitHub theo yêu cầu...", flush=True)
+    try:
+        subprocess.run(["git", "add", "."], cwd=BASE_DIR)
+        subprocess.run(["git", "commit", "-m", "Chore: Hoàn tất dọn dẹp mã nguồn, cập nhật Hero Section và file index"], cwd=BASE_DIR)
+        subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR)
+        print("=> Đã Push lên GitHub thành công!", flush=True)
+        open(_git_flag, "w").close()
+    except Exception as e:
+        print("=> Gặp lỗi khi push lên GitHub:", str(e))
+# ---------------------------------
 from pathlib import Path
 import subprocess, tempfile, logging
 from flask import Flask, jsonify, request, send_from_directory
@@ -50,7 +88,7 @@ def _save_temp(file):
 
 @app.route("/")
 def index():
-    return send_from_directory(BASE_DIR, "main.html")
+    return send_from_directory(BASE_DIR, "index.html")
 
 
 @app.route("/api/health")

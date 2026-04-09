@@ -7,6 +7,6 @@ safetensors
 scikit-learn
 soundfile
 torch
-torch-directml
+# torch-directml
 transformers
 huggingface_hub
