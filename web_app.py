@@ -1,55 +1,53 @@
 """Flask Backend — Easy Kit Audio Detection."""
-import sys, subprocess, os, shutil
+import sys, subprocess, os, shutil, tempfile, logging
 from pathlib import Path
+
 try:
-    import builtins, joblib, pandas, librosa
+    import joblib, pandas, librosa
 except ImportError:
     print("=> Tự động cài đặt thư viện...", flush=True)
     req_file = Path(__file__).resolve().parent / "requirements.txt"
-    try: subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(req_file)])
-    except: pass
-
-# --- AUTO CLEANUP LEGACY FILES ---
-BASE_DIR = Path(__file__).resolve().parent
-_rm_files = ["BAO_CAO_NCKH-integrated.html", "BAO_CAO_NCKH.html", "index-backend-connected.html",
-             "index-venv311.html", "main.html", "test-simple.html", "skilo tree.md", 
-             "short term dapper mosquito-html.rar", "simple_backend.py", "main.py", "train_emotion.py"]
-_rm_dirs = ["short term dapper mosquito-html", "venv311", "760-Hours-Vietnamese-Speech-Data-by-Mobile-Phone-main"]
-for f in _rm_files:
-    try: os.remove(BASE_DIR / f)
-    except: pass
-for d in _rm_dirs:
-    try: shutil.rmtree(BASE_DIR / d)
-    except: pass
-if (BASE_DIR / "new.html").exists() and not (BASE_DIR / "index.html").exists():
-    try: (BASE_DIR / "new.html").rename(BASE_DIR / "index.html")
-    except: pass
-
-# AUTO PUSH TO GITHUB ONCE
-_git_flag = BASE_DIR / ".git_pushed_flag"
-if not _git_flag.exists():
-    print("=> Đang đồng bộ và đẩy mã nguồn lên GitHub theo yêu cầu...", flush=True)
     try:
-        subprocess.run(["git", "add", "."], cwd=BASE_DIR)
-        subprocess.run(["git", "commit", "-m", "Chore: Hoàn tất dọn dẹp mã nguồn, cập nhật Hero Section và file index"], cwd=BASE_DIR)
-        subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR)
-        print("=> Đã Push lên GitHub thành công!", flush=True)
-        open(_git_flag, "w").close()
-    except Exception as e:
-        print("=> Gặp lỗi khi push lên GitHub:", str(e))
-# ---------------------------------
-from pathlib import Path
-import subprocess, tempfile, logging
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(req_file)])
+    except Exception:
+        pass
+
 from flask import Flask, jsonify, request, send_from_directory
 
-from audio_project.gender import GENDER_FEATURE_COLUMNS, load_gender_model, predict_gender, train_gender_model
+# ── Config ──────────────────────────────────────────────────────────────────
+BASE_DIR = Path(__file__).resolve().parent
+
+# --- AUTO CLEANUP LEGACY FILES ---
+_rm_files = [
+    "BAO_CAO_NCKH-integrated.html", "BAO_CAO_NCKH.html", "index-backend-connected.html",
+    "index-venv311.html", "main.html", "test-simple.html", "skilo tree.md",
+    "short term dapper mosquito-html.rar", "simple_backend.py", "main.py", "train_emotion.py",
+]
+_rm_dirs = ["short term dapper mosquito-html", "venv311"]
+for _f in _rm_files:
+    try:
+        os.remove(BASE_DIR / _f)
+    except OSError:
+        pass
+for _d in _rm_dirs:
+    try:
+        shutil.rmtree(BASE_DIR / _d)
+    except OSError:
+        pass
+if (BASE_DIR / "new.html").exists() and not (BASE_DIR / "index.html").exists():
+    try:
+        (BASE_DIR / "new.html").rename(BASE_DIR / "index.html")
+    except OSError:
+        pass
+
+from audio_project.gender import (GENDER_FEATURE_COLUMNS, load_gender_model, predict_gender,
+                                   predict_gender_from_file, train_gender_model)
 from audio_project.core import load_model, prepare_processed_audio, run_training_pipeline, predict_file, MODELS_DIR
 from audio_project.pronunciation import evaluate_pronunciation, list_sentences, get_dataset_dir
 from audio_project.emotion import predict_emotion_from_file
 from audio_project.cough import predict_cough, train_cough_model, load_cough_model
 from audio_project.depression import screen_depression
 
-BASE_DIR = Path(__file__).resolve().parent
 app = Flask(__name__)
 
 
@@ -76,7 +74,13 @@ def _save_temp(file):
     if suffix.lower() in (".webm", ".ogg", ".m4a", ".mp4"):
         wav_path = path.with_suffix(".wav")
         try:
-            subprocess.run(["ffmpeg", "-y", "-i", str(path), "-ar", "16000",
+            try:
+                import imageio_ffmpeg
+                ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+            except ImportError:
+                ffmpeg_exe = "ffmpeg"
+                
+            subprocess.run([ffmpeg_exe, "-y", "-i", str(path), "-ar", "16000",
                             "-ac", "1", str(wav_path)],
                            capture_output=True, timeout=30, check=True)
             path.unlink(missing_ok=True)
@@ -93,10 +97,12 @@ def index():
 
 @app.route("/api/health")
 def health():
+    from audio_project.cough import COUGH_MODEL_PATH
     return jsonify({
         "ok": True,
         "model_ready": _safe_load(load_model) is not None,
         "gender_model_ready": _safe_load(load_gender_model) is not None,
+        "cough_model_ready": COUGH_MODEL_PATH.exists(),
     })
 
 
@@ -152,6 +158,24 @@ def gender_predict():
         return jsonify({"ok": True, "prediction": predict_gender(features, model=model)})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+
+
+@app.route("/api/gender/predict-audio", methods=["POST"])
+def gender_predict_audio():
+    """Dự đoán giới tính từ file audio (tự động trích xuất đặc trưng)."""
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"ok": False, "error": "Vui lòng chọn file audio."}), 400
+    model = _safe_load(load_gender_model)
+    if not model:
+        return jsonify({"ok": False, "error": "Chưa có gender model. Hãy train trước."}), 400
+    tmp = _save_temp(file)
+    try:
+        return jsonify({"ok": True, **predict_gender_from_file(tmp, model=model)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 @app.route("/api/pronunciation/sentences")
@@ -247,6 +271,7 @@ def _auto_train():
     """Train missing models on startup."""
     ac = MODELS_DIR / "audio_classifier.joblib"
     gc = MODELS_DIR / "gender_classifier.joblib"
+    cc = MODELS_DIR / "cough_classifier.joblib"
     if not gc.exists():
         try:
             r = train_gender_model()
@@ -260,6 +285,13 @@ def _auto_train():
             logging.info("Auto-trained audio classifier: %s", r.model_path)
         except Exception as e:
             logging.warning("Auto-train audio failed: %s", e)
+    if not cc.exists():
+        try:
+            from audio_project.cough import train_cough_model
+            r = train_cough_model()
+            logging.info("Auto-trained cough model: %s", r.model_path)
+        except Exception as e:
+            logging.warning("Auto-train cough failed: %s", e)
 
 
 if __name__ == "__main__":
